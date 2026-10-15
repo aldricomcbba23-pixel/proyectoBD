@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Compras y Ventas - Control de Caja</title>
+    <style>
+        /* =============================================================================
+           ESTILOS GENERALES: MINIMALISTA, MODERNO Y PULCRO
+           ============================================================================= */
+        :root {
+            --bg-color: #F8F9FA;
+            --surface-color: #FFFFFF;
+            --border-color: #D1D5DB;
+            --border-focus: #111827;
+            --text-main: #111827;
+            --text-muted: #4B5563;
+            --btn-primary-bg: #111827;
+            --btn-primary-hover: #000000;
+            --btn-secondary-bg: #E5E7EB;
+            --btn-secondary-hover: #D1D5DB;
+            --accent-venta: #047857;
+            --accent-venta-bg: #ECFDF5;
+            --accent-compra: #B91C1C;
+            --accent-compra-bg: #FEF2F2;
+            --accent-caja: #1E3A8A;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            line-height: 1.45;
+            padding: 24px 16px;
+        }
+
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* -----------------------------------------------------------------------------
+           RESUMEN DE TOTALES MINIMALISTA (PESTAÑA REGISTROS)
+           ----------------------------------------------------------------------------- */
+        .totales-minimal-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+
+        .totales-box {
+            flex: 1;
+            min-width: 180px;
+            background: #FFFFFF;
+            border: 1px solid var(--border-color);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .totales-box-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .totales-box-valor {
+            font-size: 1.25rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            color: var(--text-main);
+        }
+
+        /* -----------------------------------------------------------------------------
+           SECCIÓN DE FORMULARIO DINÁMICO POR PESTAÑAS
+           ----------------------------------------------------------------------------- */
+        .form-section {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        .section-header-flex {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-color);
+            background: #F9FAFB;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #10B981;
+        }
+
+        .status-dot.offline {
+            background-color: #F59E0B;
+        }
+
+        /* Selector de Tipo (Pestañas Planas) */
+        .tabs-selector {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 18px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            border-bottom: none;
+            padding: 9px 24px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            text-transform: uppercase;
+            position: relative;
+            top: 2px;
+            border-radius: 0;
+            transition: color 0.15s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            background-color: var(--surface-color);
+            border-color: var(--border-color) var(--border-color) transparent var(--border-color);
+            border-top: 3px solid var(--btn-primary-bg);
+            color: var(--text-main);
+        }
+
+        /* Grupos de campos dinámicos */
+        .dynamic-fields-group {
+            display: none;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .dynamic-fields-group.active {
+            display: flex;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .field-col {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .field-col.full-width {
+            flex: 1 1 100%;
+        }
+
+        label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        input, select, textarea {
+            background-color: #FFFFFF;
+            border: 1px solid var(--border-color);
+            padding: 9px 11px;
+            font-size: 0.92rem;
+            font-family: inherit;
+            color: var(--text-main);
+            border-radius: 0;
+            outline: none;
+            transition: border-color 0.15s ease;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--border-focus);
+        }
+
+        /* Botones de acción */
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 14px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            padding: 9px 22px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+            transition: background-color 0.15s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--btn-primary-bg);
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--btn-primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--btn-secondary-bg);
+            color: var(--text-main);
+            border-color: #9CA3AF;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--btn-secondary-hover);
+        }
+
+
+
+        /* -----------------------------------------------------------------------------
+           SECCIÓN: BITÁCORA Y REGISTROS (TABLA)
+           ----------------------------------------------------------------------------- */
+        .table-section {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+        }
+
+        .table-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .filter-control select {
+            padding: 5px 8px;
+            font-size: 0.85rem;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 9px 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .data-table th {
+            background-color: #F3F4F6;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #F9FAFB;
+        }
+
+        .col-id {
+            text-align: center;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            width: 70px;
+            white-space: nowrap;
+            color: var(--text-muted);
+        }
+
+        .tipo-tag {
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            padding: 2px 6px;
+            display: inline-block;
+            font-size: 0.82rem;
+        }
+
+        .tipo-tag.venta {
+            color: var(--accent-venta);
+            background: var(--accent-venta-bg);
+            border: 1px solid #A7F3D0;
+        }
+
+        .tipo-tag.compra {
+            color: var(--accent-compra);
+            background: var(--accent-compra-bg);
+            border: 1px solid #FECACA;
+        }
+
+        .col-precio {
+            text-align: right;
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        .col-precio.venta {
+            color: var(--accent-venta);
+        }
+
+        .col-precio.compra {
+            color: var(--accent-compra);
+        }
+
+        .data-table th.col-precio-header {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #111827;
+            color: #FFFFFF;
+            padding: 11px 18px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 100;
+            transition: opacity 0.2s ease;
+        }
+
+        .notification.hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .totales-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+            .field-col {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="container">
+
+        <!-- =====================================================================
+             FORMULARIO DINÁMICO POR PESTAÑAS (VENTA, COMPRA, REGISTROS)
+             ===================================================================== -->
+        <section class="form-section">
+            <div class="section-header-flex">
+                <h1 class="section-title">Registro de Compras y Ventas</h1>
+                <div class="status-badge" id="badgeEstado">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span id="statusTexto">Conectando a base de datos...</span>
+                </div>
+            </div>
+
+            <!-- Pestañas de Navegación -->
+            <div class="tabs-selector" role="tablist">
+                <button type="button" class="tab-btn active" data-tipo="VENTA" id="tabVenta">VENTA</button>
+                <button type="button" class="tab-btn" data-tipo="COMPRA" id="tabCompra">COMPRA</button>
+                <button type="button" class="tab-btn" data-tipo="REGISTROS" id="tabRegistros">REGISTROS</button>
+            </div>
+
+            <!-- -------------------------------------------------------------
+                 PESTAÑA 1: VENTA (Solo Monto y Fecha y Hora)
+                 ------------------------------------------------------------- -->
+            <form id="grupoVenta" class="dynamic-fields-group active" autocomplete="off">
+                <div class="form-row">
+                    <div class="field-col">
+                        <label for="ventaMonto">Monto (BS) *</label>
+                        <input type="number" id="ventaMonto" step="0.01" min="0" placeholder="0.00" autofocus>
+                    </div>
+                    <div class="field-col">
+                        <label for="ventaFechaHora">Fecha y Hora *</label>
+                        <input type="datetime-local" id="ventaFechaHora">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="btnGuardarVenta" class="btn btn-primary">Guardar Registro</button>
+                    <button type="button" id="btnLimpiarVenta" class="btn btn-secondary">Limpiar Campos</button>
+                </div>
+            </form>
+
+            <!-- -------------------------------------------------------------
+                 PESTAÑA 2: COMPRA (Gasto a realizar, Monto y Fecha y Hora; sin quién hace el gasto)
+                 ------------------------------------------------------------- -->
+            <form id="grupoCompra" class="dynamic-fields-group" autocomplete="off">
+                <div class="form-row">
+                    <div class="field-col full-width">
+                        <label for="compraDetalle">Qué gasto o compra se está haciendo *</label>
+                        <input type="text" id="compraDetalle" placeholder="Ej: Compra de insumos, Pago a proveedor de pan">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="field-col">
+                        <label for="compraMonto">Cuánto se gastó (BS) *</label>
+                        <input type="number" id="compraMonto" step="0.01" min="0" placeholder="0.00">
+                    </div>
+                    <div class="field-col">
+                        <label for="compraFechaHora">Fecha y Hora *</label>
+                        <input type="datetime-local" id="compraFechaHora">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" id="btnGuardarCompra" class="btn btn-primary">Guardar Registro</button>
+                    <button type="button" id="btnLimpiarCompra" class="btn btn-secondary">Limpiar Campos</button>
+                </div>
+            </form>
+
+            <!-- -------------------------------------------------------------
+                 PESTAÑA 3: REGISTROS (Filtro por Fechas y Tarjetas de Totales de Caja)
+                 ------------------------------------------------------------- -->
+            <div id="grupoRegistros" class="dynamic-fields-group">
+
+                <!-- RESUMEN DE TOTALES: SENCILLO Y MINIMALISTA -->
+                <div class="totales-minimal-grid">
+                    <div class="totales-box">
+                        <span class="totales-box-label">Total Ventas</span>
+                        <span class="totales-box-valor" id="cardTotalVentas">0.00 BS</span>
+                    </div>
+                    <div class="totales-box">
+                        <span class="totales-box-label">Total Compras</span>
+                        <span class="totales-box-valor" id="cardTotalCompras">0.00 BS</span>
+                    </div>
+                    <div class="totales-box">
+                        <span class="totales-box-label">Total Caja</span>
+                        <span class="totales-box-valor" id="cardTotalCaja">0.00 BS</span>
+                    </div>
+                </div>
+
+                <!-- FILTRO POR FECHAS: EN LÍNEA Y COMPACTO -->
+                <div class="form-row" style="align-items: flex-end;">
+                    <div class="field-col" style="min-width: 140px;">
+                        <label for="otroFiltroPeriodo">Período</label>
+                        <select id="otroFiltroPeriodo">
+                            <option value="TODOS">Todos</option>
+                            <option value="HOY">Hoy</option>
+                            <option value="7DIAS">Últimos 7 Días</option>
+                            <option value="MES">Este Mes</option>
+                            <option value="PERSONALIZADO">Personalizado</option>
+                        </select>
+                    </div>
+                    <div class="field-col" id="colFechaDesde" style="min-width: 140px;">
+                        <label for="otroFechaDesde">Fecha Desde</label>
+                        <input type="date" id="otroFechaDesde">
+                    </div>
+                    <div class="field-col" id="colFechaHasta" style="min-width: 140px;">
+                        <label for="otroFechaHasta">Fecha Hasta</label>
+                        <input type="date" id="otroFechaHasta">
+                    </div>
+                    <div class="field-col" style="min-width: 130px;">
+                        <label for="otroFiltroTipo">Tipo</label>
+                        <select id="otroFiltroTipo">
+                            <option value="TODOS">Todos</option>
+                            <option value="VENTA">Ventas</option>
+                            <option value="COMPRA">Compras</option>
+                        </select>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" id="btnAplicarFiltroOtro" class="btn btn-primary" style="padding:9px 16px;">Filtrar</button>
+                        <button type="button" id="btnLimpiarFiltroOtro" class="btn btn-secondary" style="padding:9px 16px;">Limpiar</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             TABLA GENERAL / BITÁCORA DE REGISTROS CON ID
+             ===================================================================== -->
+        <section class="table-section">
+            <div class="table-toolbar">
+                <h2 class="section-title" id="tituloTablaRegistros" style="margin-bottom:0; border-bottom:none; padding-bottom:0;">
+                    Historial de Compras y Ventas
+                </h2>
+
+                <div class="toolbar-actions">
+                    <div class="filter-control">
+                        <label for="filtroRapidoTipo">Mostrar:</label>
+                        <select id="filtroRapidoTipo">
+                            <option value="TODOS">Todos los movimientos</option>
+                            <option value="VENTA">Solo Ventas</option>
+                            <option value="COMPRA">Solo Compras</option>
+                        </select>
+                    </div>
+                    <button type="button" id="btnRefrescar" class="btn btn-secondary" style="padding:5px 12px; font-size:0.8rem;">
+                        Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-id">ID</th>
+                            <th style="width: 170px;">Fecha y Hora</th>
+                            <th style="width: 130px;">Tipo</th>
+                            <th>Concepto / Detalle de la Operación</th>
+                            <th class="col-precio-header" style="width: 150px;">Monto (BS)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaRegistrosCuerpo">
+                        <tr>
+                            <td colspan="5" class="text-center">Cargando registros...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="alertaFlotante" class="notification hidden" role="status"></div>
+
+    <!-- =============================================================================
+       LÓGICA JAVASCRIPT: POSTGREST + CÁLCULO DE TOTALES + REGISTROS POR FECHA + ID
+       ============================================================================= -->
+    <script>
+        // Endpoint REST de PostgREST
+        const API_URL = 'http://localhost:3000/registros_operativos';
+
+        // Estado global de la aplicación
+        let pestañaActual = 'VENTA';
+        let registrosGlobales = [];
+        let almacenamientoBuffer = JSON.parse(localStorage.getItem('registros_buffer_cv') || '[]');
+
+        // Elementos de Totales (ubicados dentro de la pestaña REGISTROS)
+        const cardTotalVentas = document.getElementById('cardTotalVentas');
+        const cardTotalCompras = document.getElementById('cardTotalCompras');
+        const cardTotalCaja = document.getElementById('cardTotalCaja');
+
+        // Estado del servidor
+        const statusDot = document.getElementById('statusDot');
+        const statusTexto = document.getElementById('statusTexto');
+
+        // Pestañas
+        const tabVenta = document.getElementById('tabVenta');
+        const tabCompra = document.getElementById('tabCompra');
+        const tabRegistros = document.getElementById('tabRegistros');
+        const listaPestañas = [tabVenta, tabCompra, tabRegistros];
+
+        // Grupos de campos
+        const grupoVenta = document.getElementById('grupoVenta');
+        const grupoCompra = document.getElementById('grupoCompra');
+        const grupoRegistros = document.getElementById('grupoRegistros');
+
+        // Campos Venta (Solo Monto y Fecha/Hora)
+        const ventaMonto = document.getElementById('ventaMonto');
+        const ventaFechaHora = document.getElementById('ventaFechaHora');
+        const btnGuardarVenta = document.getElementById('btnGuardarVenta');
+        const btnLimpiarVenta = document.getElementById('btnLimpiarVenta');
+
+        // Campos Compra (Gasto, Monto y Fecha/Hora; sin usuario)
+        const compraDetalle = document.getElementById('compraDetalle');
+        const compraMonto = document.getElementById('compraMonto');
+        const compraFechaHora = document.getElementById('compraFechaHora');
+        const btnGuardarCompra = document.getElementById('btnGuardarCompra');
+        const btnLimpiarCompra = document.getElementById('btnLimpiarCompra');
+
+        // Campos Pestaña Registros (Filtros por Fecha)
+        const otroFiltroPeriodo = document.getElementById('otroFiltroPeriodo');
+        const otroFechaDesde = document.getElementById('otroFechaDesde');
+        const otroFechaHasta = document.getElementById('otroFechaHasta');
+        const otroFiltroTipo = document.getElementById('otroFiltroTipo');
+        const btnAplicarFiltroOtro = document.getElementById('btnAplicarFiltroOtro');
+        const btnLimpiarFiltroOtro = document.getElementById('btnLimpiarFiltroOtro');
+
+        // Tabla y Filtro Rápido
+        const filtroRapidoTipo = document.getElementById('filtroRapidoTipo');
+        const tablaCuerpo = document.getElementById('tablaRegistrosCuerpo');
+        const alertaFlotante = document.getElementById('alertaFlotante');
+        const btnRefrescar = document.getElementById('btnRefrescar');
+        const tituloTablaRegistros = document.getElementById('tituloTablaRegistros');
+
+        // -------------------------------------------------------------------------
+        // UTILIDADES Y FECHAS
+        // -------------------------------------------------------------------------
+        function obtenerFechaHoraActualISO() {
+            const ahora = new Date();
+            ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            return ahora.toISOString().slice(0, 16);
+        }
+
+        function formatearMoneda(monto) {
+            const num = parseFloat(monto) || 0;
+            return num.toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' BS';
+        }
+
+        function formatearFechaHora(cadenaIso) {
+            if (!cadenaIso) return '—';
+            try {
+                const d = new Date(cadenaIso);
+                if (isNaN(d.getTime())) return cadenaIso;
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const anio = d.getFullYear();
+                const hora = String(d.getHours()).padStart(2, '0');
+                const min = String(d.getMinutes()).padStart(2, '0');
+                return `${dia}/${mes}/${anio} ${hora}:${min}`;
+            } catch {
+                return cadenaIso;
+            }
+        }
+
+        function notificar(mensaje) {
+            alertaFlotante.textContent = mensaje;
+            alertaFlotante.classList.remove('hidden');
+            setTimeout(() => {
+                alertaFlotante.classList.add('hidden');
+            }, 3000);
+        }
+
+        function escaparTexto(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function normalizarTipo(tipo) {
+            const t = (tipo || '').toUpperCase();
+            if (t === 'INGRESO' || t === 'VENTA') return 'VENTA';
+            if (t === 'EGRESO' || t === 'COMPRA') return 'COMPRA';
+            return t || 'VENTA';
+        }
+
+        // -------------------------------------------------------------------------
+        // GESTIÓN DE PESTAÑAS
+        // -------------------------------------------------------------------------
+        function cambiarPestaña(tipo) {
+            pestañaActual = tipo;
+            listaPestañas.forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-tipo') === tipo);
+            });
+
+            grupoVenta.classList.toggle('active', tipo === 'VENTA');
+            grupoCompra.classList.toggle('active', tipo === 'COMPRA');
+            grupoRegistros.classList.toggle('active', tipo === 'REGISTROS');
+
+            if (tipo === 'VENTA') {
+                tituloTablaRegistros.textContent = 'Historial de Compras y Ventas';
+                filtroRapidoTipo.value = 'TODOS';
+                renderizarTabla();
+                ventaMonto.focus();
+            } else if (tipo === 'COMPRA') {
+                tituloTablaRegistros.textContent = 'Historial de Compras y Ventas';
+                filtroRapidoTipo.value = 'TODOS';
+                renderizarTabla();
+                compraDetalle.focus();
+            } else if (tipo === 'REGISTROS') {
+                tituloTablaRegistros.textContent = 'Registros de Compras y Ventas';
+                aplicarFiltrosRegistros();
+            }
+        }
+
+        tabVenta.addEventListener('click', () => cambiarPestaña('VENTA'));
+        tabCompra.addEventListener('click', () => cambiarPestaña('COMPRA'));
+        tabRegistros.addEventListener('click', () => cambiarPestaña('REGISTROS'));
+
+        // -------------------------------------------------------------------------
+        // RENDERIZADO DE TABLA GENERAL
+        // -------------------------------------------------------------------------
+        function renderizarTabla(registrosParaMostrar = null) {
+            let lista = registrosParaMostrar !== null ? registrosParaMostrar : [...registrosGlobales];
+
+            // Si no estamos en la pestaña REGISTROS, aplicar el selector rápido
+            if (pestañaActual !== 'REGISTROS') {
+                const filtro = filtroRapidoTipo.value.toUpperCase();
+                if (filtro !== 'TODOS') {
+                    lista = lista.filter(r => normalizarTipo(r.tipo_evento) === filtro);
+                }
+            }
+
+            if (lista.length === 0) {
+                tablaCuerpo.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center" style="padding: 24px; color: var(--text-muted);">
+                            No se encontraron registros de compras o ventas.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const filasHtml = lista.map(item => {
+                const tipoNorm = normalizarTipo(item.tipo_evento);
+                const esVenta = tipoNorm === 'VENTA';
+                const tagClase = esVenta ? 'venta' : 'compra';
+                const precioClase = esVenta ? 'venta' : 'compra';
+                const prefijoSigno = esVenta ? '+ ' : '- ';
+                const fechaStr = formatearFechaHora(item.fecha_hora);
+                const montoStr = prefijoSigno + formatearMoneda(item.monto);
+                const detalleStr = escaparTexto(item.detalle || (esVenta ? 'Venta realizada' : 'Compra'));
+                const displayId = item.id ? `#${item.id}` : '#—';
+
+                return `
+                    <tr>
+                        <td class="col-id">${displayId}</td>
+                        <td>${fechaStr}</td>
+                        <td><span class="tipo-tag ${tagClase}">${tipoNorm}</span></td>
+                        <td>${detalleStr}</td>
+                        <td class="col-precio ${precioClase}">${montoStr}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tablaCuerpo.innerHTML = filasHtml;
+        }
+
+        // -------------------------------------------------------------------------
+        // FILTROS AVANZADOS POR FECHA (PESTAÑA REGISTROS)
+        // Calcula Totales de Ventas, Compras y Total Caja
+        // -------------------------------------------------------------------------
+        function aplicarFiltrosRegistros() {
+            let filtrados = [...registrosGlobales];
+
+            const modoPeriodo = otroFiltroPeriodo.value;
+            const ahora = new Date();
+            const hoyInicio = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 0, 0, 0);
+            const hoyFin = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 23, 59, 59, 999);
+
+            if (modoPeriodo === 'HOY') {
+                filtrados = filtrados.filter(r => {
+                    const f = new Date(r.fecha_hora);
+                    return f >= hoyInicio && f <= hoyFin;
+                });
+            } else if (modoPeriodo === '7DIAS') {
+                const hace7Dias = new Date(hoyInicio);
+                hace7Dias.setDate(hace7Dias.getDate() - 7);
+                filtrados = filtrados.filter(r => {
+                    const f = new Date(r.fecha_hora);
+                    return f >= hace7Dias && f <= hoyFin;
+                });
+            } else if (modoPeriodo === 'MES') {
+                const mesInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1, 0, 0, 0);
+                filtrados = filtrados.filter(r => {
+                    const f = new Date(r.fecha_hora);
+                    return f >= mesInicio && f <= hoyFin;
+                });
+            } else if (modoPeriodo === 'PERSONALIZADO') {
+                const valDesde = otroFechaDesde.value;
+                const valHasta = otroFechaHasta.value;
+
+                if (valDesde) {
+                    const dDesde = new Date(`${valDesde}T00:00:00`);
+                    filtrados = filtrados.filter(r => new Date(r.fecha_hora) >= dDesde);
+                }
+                if (valHasta) {
+                    const dHasta = new Date(`${valHasta}T23:59:59.999`);
+                    filtrados = filtrados.filter(r => new Date(r.fecha_hora) <= dHasta);
+                }
+            }
+
+            // Filtro por tipo en la pestaña REGISTROS
+            const tipoFiltro = otroFiltroTipo.value.toUpperCase();
+            if (tipoFiltro !== 'TODOS') {
+                filtrados = filtrados.filter(r => normalizarTipo(r.tipo_evento) === tipoFiltro);
+            }
+
+            // Calcular totales de Ventas, Compras y Caja para los registros filtrados
+            let subVentas = 0;
+            let subCompras = 0;
+
+            filtrados.forEach(r => {
+                const t = normalizarTipo(r.tipo_evento);
+                const m = parseFloat(r.monto) || 0;
+                if (t === 'VENTA') subVentas += m;
+                else if (t === 'COMPRA') subCompras += m;
+            });
+
+            const subCaja = subVentas - subCompras;
+
+            cardTotalVentas.textContent = formatearMoneda(subVentas);
+            cardTotalCompras.textContent = formatearMoneda(subCompras);
+            cardTotalCaja.textContent = formatearMoneda(subCaja);
+
+            if (subCaja < 0) {
+                cardTotalCaja.style.color = 'var(--accent-compra)';
+            } else {
+                cardTotalCaja.style.color = 'var(--accent-caja)';
+            }
+
+            renderizarTabla(filtrados);
+        }
+
+        otroFiltroPeriodo.addEventListener('change', () => {
+            if (otroFiltroPeriodo.value === 'PERSONALIZADO') {
+                document.getElementById('colFechaDesde').style.display = 'flex';
+                document.getElementById('colFechaHasta').style.display = 'flex';
+            }
+            aplicarFiltrosRegistros();
+        });
+
+        otroFiltroTipo.addEventListener('change', aplicarFiltrosRegistros);
+        otroFechaDesde.addEventListener('change', aplicarFiltrosRegistros);
+        otroFechaHasta.addEventListener('change', aplicarFiltrosRegistros);
+        btnAplicarFiltroOtro.addEventListener('click', aplicarFiltrosRegistros);
+
+        btnLimpiarFiltroOtro.addEventListener('click', () => {
+            otroFiltroPeriodo.value = 'TODOS';
+            otroFiltroTipo.value = 'TODOS';
+            otroFechaDesde.value = '';
+            otroFechaHasta.value = '';
+            aplicarFiltrosRegistros();
+        });
+
+        filtroRapidoTipo.addEventListener('change', () => {
+            renderizarTabla();
+        });
+
+        btnRefrescar.addEventListener('click', async () => {
+            await cargarRegistros();
+            notificar('Historial actualizado.');
+        });
+
+        // -------------------------------------------------------------------------
+        // GUARDAR REGISTROS (VENTA Y COMPRA)
+        // -------------------------------------------------------------------------
+        function limpiarFormularioVenta() {
+            ventaMonto.value = '';
+            ventaFechaHora.value = obtenerFechaHoraActualISO();
+            ventaMonto.focus();
+        }
+
+        function limpiarFormularioCompra() {
+            compraDetalle.value = '';
+            compraMonto.value = '';
+            compraFechaHora.value = obtenerFechaHoraActualISO();
+            compraDetalle.focus();
+        }
+
+        btnLimpiarVenta.addEventListener('click', limpiarFormularioVenta);
+        btnLimpiarCompra.addEventListener('click', limpiarFormularioCompra);
+
+        async function procesarGuardado(payload, botonActivo, callbackLimpiar) {
+            botonActivo.disabled = true;
+
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=representation'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const datos = await res.json();
+                    const nuevo = datos[0] || payload;
+                    registrosGlobales.unshift(nuevo);
+                    notificar(`¡${payload.tipo_evento} registrada exitosamente con ID #${nuevo.id}!`);
+                    actualizarEstadoServidor(true);
+                } else {
+                    throw new Error('Error al responder PostgREST');
+                }
+            } catch (err) {
+                console.warn('Backend PostgREST no accesible, guardando en buffer local con ID.');
+                const nuevoId = (registrosGlobales.length > 0 ? (Math.max(...registrosGlobales.map(r => r.id || 0)) + 1) : 1);
+                const fallbackItem = {
+                    ...payload,
+                    id: nuevoId
+                };
+                almacenamientoBuffer.unshift(fallbackItem);
+                localStorage.setItem('registros_buffer_cv', JSON.stringify(almacenamientoBuffer));
+                registrosGlobales.unshift(fallbackItem);
+                notificar(`¡${payload.tipo_evento} guardada localmente con ID #${nuevoId}!`);
+                actualizarEstadoServidor(false);
+            } finally {
+                botonActivo.disabled = false;
+                callbackLimpiar();
+                if (pestañaActual === 'REGISTROS') {
+                    aplicarFiltrosRegistros();
+                } else {
+                    renderizarTabla();
+                }
+            }
+        }
+
+        // Envío de Venta (soporta clic en botón Guardar y presionar Enter en campos de Venta)
+        grupoVenta.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const monto = parseFloat(ventaMonto.value);
+            const fechaHora = ventaFechaHora.value;
+
+            if (isNaN(monto) || monto <= 0) {
+                alert('Por favor ingrese un Monto válido mayor a 0 para la venta.');
+                ventaMonto.focus();
+                return;
+            }
+
+            const payload = {
+                tipo_evento: 'VENTA',
+                monto: monto,
+                fecha_hora: fechaHora ? new Date(fechaHora).toISOString() : new Date().toISOString(),
+                detalle: 'Venta realizada'
+            };
+
+            procesarGuardado(payload, btnGuardarVenta, limpiarFormularioVenta);
+        });
+
+        // Envío de Compra (soporta clic en botón Guardar y presionar Enter en campos de Compra)
+        grupoCompra.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const detalle = compraDetalle.value.trim();
+            const monto = parseFloat(compraMonto.value);
+            const fechaHora = compraFechaHora.value;
+
+            if (!detalle) {
+                alert('Por favor describa qué gasto o compra se está haciendo.');
+                compraDetalle.focus();
+                return;
+            }
+
+            if (isNaN(monto) || monto <= 0) {
+                alert('Por favor ingrese el monto gastado válido mayor a 0.');
+                compraMonto.focus();
+                return;
+            }
+
+            const payload = {
+                tipo_evento: 'COMPRA',
+                monto: monto,
+                fecha_hora: fechaHora ? new Date(fechaHora).toISOString() : new Date().toISOString(),
+                detalle: detalle
+            };
+
+            procesarGuardado(payload, btnGuardarCompra, limpiarFormularioCompra);
+        });
+
+        // -------------------------------------------------------------------------
+        // SINCRONIZACIÓN Y CARGA DESDE POSTGREST
+        // -------------------------------------------------------------------------
+        function actualizarEstadoServidor(conectado) {
+            if (conectado) {
+                statusDot.className = 'status-dot';
+                statusTexto.textContent = 'PostgreSQL: Conectado (bd_bar)';
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusTexto.textContent = 'Modo Local (Offline)';
+            }
+        }
+
+        async function cargarRegistros() {
+            let apiRegistros = [];
+            let conexionExitosa = false;
+
+            try {
+                const res = await fetch(`${API_URL}?order=id.desc`);
+                if (res.ok) {
+                    apiRegistros = await res.json();
+                    conexionExitosa = true;
+
+                    // Si hay buffer pendiente, sincronizarlo con PostgreSQL
+                    if (almacenamientoBuffer && almacenamientoBuffer.length > 0) {
+                        for (let i = almacenamientoBuffer.length - 1; i >= 0; i--) {
+                            const pend = almacenamientoBuffer[i];
+                            const limpio = {
+                                tipo_evento: normalizarTipo(pend.tipo_evento),
+                                monto: pend.monto,
+                                fecha_hora: pend.fecha_hora,
+                                detalle: pend.detalle || 'Registro pendiente'
+                            };
+                            try {
+                                await fetch(API_URL, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(limpio)
+                                });
+                            } catch (e) {
+                                console.error('Error al sincronizar:', e);
+                            }
+                        }
+                        almacenamientoBuffer = [];
+                        localStorage.removeItem('registros_buffer_cv');
+
+                        const resRefrescar = await fetch(`${API_URL}?order=id.desc`);
+                        if (resRefrescar.ok) {
+                            apiRegistros = await resRefrescar.json();
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('No se pudo contactar a PostgREST:', e);
+            }
+
+            actualizarEstadoServidor(conexionExitosa);
+
+            // Unir sin duplicados por ID
+            const unificados = [...almacenamientoBuffer, ...apiRegistros];
+            const mapa = new Map();
+            for (const item of unificados) {
+                const idClave = item.id || `temp-${Math.random()}`;
+                if (!mapa.has(idClave)) {
+                    mapa.set(idClave, item);
+                }
+            }
+
+            registrosGlobales = Array.from(mapa.values()).sort((a, b) => (b.id || 0) - (a.id || 0));
+
+            if (pestañaActual === 'REGISTROS') {
+                aplicarFiltrosRegistros();
+            } else {
+                renderizarTabla();
+            }
+        }
+
+        // -------------------------------------------------------------------------
+        // INICIALIZACIÓN
+        // -------------------------------------------------------------------------
+        document.addEventListener('DOMContentLoaded', () => {
+            const ahora = obtenerFechaHoraActualISO();
+            ventaFechaHora.value = ahora;
+            compraFechaHora.value = ahora;
+
+            // Fechas por defecto para filtro personalizado
+            const hoyStr = ahora.slice(0, 10);
+            otroFechaDesde.value = hoyStr;
+            otroFechaHasta.value = hoyStr;
+
+            cargarRegistros();
+
+            // Reintento automático de conexión cada 3 segundos cuando esté en modo offline
+            setInterval(() => {
+                if (statusDot && statusDot.classList.contains('offline')) {
+                    cargarRegistros();
+                }
+            }, 3000);
+        });
+    </script>
+</body>
+</html>
